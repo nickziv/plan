@@ -261,7 +261,9 @@ handle_err(err_t e, char *n, day_t d, tm_t *date)
 			strftime(path, 12, "%Y-%m-%d", date);
 			printf("%s: ", path);
 		} else {
-			printf("%s: ", daystr[d]);
+			if (d >= 0) {
+				printf("%s: ", daystr[d]);
+			}
 		}
 	}
 
@@ -354,13 +356,16 @@ do_create(int ac, char *av[])
 		exit(0);
 	}
 
+	int cerr;
 	if (c == NULL && *av[1] == '@') {
-		c = av[1];
+		c = av[1] + 1;
+		cerr = create_todo(c, -1, NULL);
+		handle_err(cerr, (c+2), -1, NULL);
+		return (0);
 	}
 
 
 
-	int cerr;
 	if (*(c+1) == '@') {
 		if (week) {
 			while (wi < 7) {
@@ -405,19 +410,26 @@ do_destroy(int ac, char *av[])
 	c = strchr(av[1], '/');
 
 
-	if (c == NULL) {
+	if (c == NULL && *av[1] != '@') {
 		printf("A '/' must separate the date or day from the name\n");
 		exit(0);
 	}
 
 
-	if (D == 0 && d == -1 && !week) {
+	if (D == 0 && d == -1 && !week && *av[1] != '@') {
 		printf("\"%s\" is not a valid day or date\n", av[1]);
 		exit(0);
 	}
 
-
 	int dret;
+	if (c == NULL && *av[1] == '@') {
+		c = av[1] + 1;
+		dret = destroy_todo(c, -1, NULL);
+		handle_err(dret, c, -1, NULL);
+		return (0);
+	}
+
+
 	if (*(c+1) == '@') {
 		if (week) {
 			while (wi < 7) {

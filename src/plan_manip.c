@@ -140,7 +140,11 @@ openday(day_t day)
 	case SUN:
 		path = "sun";
 		break;
+
+	default:
+		return (-1);
 	}
+
 	mkdirat(days_fd, path, ALLRWX);
 	return (openat(days_fd, path, O_RDONLY));
 }
@@ -286,14 +290,18 @@ create_act(char *n, day_t day, tm_t *date)
 int
 create_todo(char *n, int day, tm_t *date)
 {
-	int dfd = -1;
+	int dfd;
 	if (date) {
 		dfd = opendate(date);
 	} else {
 		dfd = openday(day);
 	}
 
-	int tdfd = opentodos(dfd);
+
+	int tdfd;
+	printf("%d\n", dfd);
+	tdfd = opentodos(dfd);
+
 	int tfd = openat(tdfd, n, O_RDWR, ALLRWX);
 	if (tfd != -1) {
 		return (CREATE_TD_EEXIST);
@@ -1447,7 +1455,7 @@ void
 list_gen_todo()
 {
 	char time_fmt[10];
-	int tfd = opentodos(todos_fd);
+	int tfd = opentodos(-1);
 	read_todo_dir(tfd);
 	if (t_elems == 0) {
 		goto noprint_todos;
