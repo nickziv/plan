@@ -962,7 +962,8 @@ static plan_cmd_t cmd_tbl[] = {
 #define	NCMD	(sizeof (cmd_tbl) / sizeof (cmd_tbl[0]))
 
 #define	LIST_USAGE\
-	"\tlist -a | -t today | <day> | <date> | week\n"
+	"\tlist -a | -t today | <day> | <date> | week | this_week | next_week\n"\
+	"\tlist -t general\n"
 
 static void
 usage(int ix, int usage_bool)
