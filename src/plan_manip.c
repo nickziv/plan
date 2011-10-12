@@ -299,7 +299,6 @@ create_todo(char *n, int day, tm_t *date)
 
 
 	int tdfd;
-	printf("%d\n", dfd);
 	tdfd = opentodos(dfd);
 
 	int tfd = openat(tdfd, n, O_RDWR, ALLRWX);
