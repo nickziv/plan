@@ -696,7 +696,8 @@ do_awake(int ac, char *av[])
 	size_t base;
 	size_t off;
 	int ret;
-	tm_t *date;
+	tm_t t;
+	tm_t *date = &t;
 	char *c = av[1]+6;
 	char *comma = strchr(c, ',');
 	day_t day = -1;
@@ -741,7 +742,8 @@ do_time(int ac, char *av[])
 {
 	int week = 0;
 	day_t day = -1;
-	tm_t *date;
+	tm_t t;
+	tm_t *date = &t;
 	char *n;
 	int time;
 	char *at = strchr(av[2], '@');
@@ -922,7 +924,8 @@ static int
 do_list(int ac, char *av[])
 {
 	int flag = 0;
-	tm_t *date;
+	tm_t t;
+	tm_t *date = &t;
 	day_t day = -1;
 	int cc;
 	char *ls_target;
