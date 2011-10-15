@@ -750,12 +750,8 @@ do_time(int ac, char *av[])
 	n = strchr(av[2], '/');
 	n += 1;
 
-	if (*av[2] >= 48 && *av[2] <= 57) {
-		parse_date(av[2], &date);
-	} else {
-		day = parse_day(av[2]);
-		date = NULL;
-	}
+	parse_date(av[2], &date);
+	day = parse_day(av[2]);
 
 	if (day == -1 && date == 0) {
 		day_err();
