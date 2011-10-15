@@ -71,12 +71,14 @@ extern int rename_act(char *, char *, day_t, tm_t *);
 extern int set_awake(day_t, tm_t *, size_t, size_t);
 extern int set_dur(char *, int, tm_t *, size_t, size_t);
 extern int set_time_act(char *, int, tm_t *, int, char);
+extern int set_details_act(char *, int, tm_t *, char *);
+extern int set_details_todo(char *, int, tm_t *, char *);
 extern void list(day_t, tm_t *, int, int *);
 extern void list_week(int);
 extern void list_today(int);
 extern void list_this_week(int);
 extern void list_next_week(int);
-extern void list_gen_todo(void);
+extern void list_gen_todo(int);
 
 
 /*
@@ -89,6 +91,7 @@ typedef enum plan_help {
 	HELP_CREATE,
 	HELP_DESTROY,
 	HELP_RENAME,
+	HELP_DESCRIBE,
 	HELP_SET,
 	HELP_SET_TIME,
 	HELP_SET_DURATION,
@@ -531,6 +534,57 @@ skip_ampersand_errors:;
 	return (0);
 }
 
+static int
+do_describe(int ac, char *av[])
+{
+	if (ac < 2) {
+		return (-1);
+	}
+
+	tm_t tm;
+	tm_t *D = &tm;
+	char *d = av[1];
+	day_t day;
+	char *target = av[1];
+	char *desc = NULL;
+	if (ac >= 3) {
+		desc = av[2];
+	}
+
+	if (*target == '@') {
+		target++;
+		set_details_todo(target, -1, NULL, desc);
+		return (0);
+	}
+
+	char *slash = strchr(target, '/');
+
+	if (slash == target) {
+		printf("Please enter a day or date before the slash\n");
+		exit(0);
+	}
+
+	if (slash) {
+		target = (slash + 1);
+		if ((*target) == '\0') {
+			printf("Please enter an activity"
+				" or todo after the slash\n");
+			exit(0);
+		}
+	}
+
+	parse_date(d, &D);
+	day = parse_day(d);
+
+	if (*target == '@') {
+		set_details_todo((target + 1), day, D, desc);
+	} else {
+		set_details_act(target, day, D, desc);
+	}
+
+	return (0);
+}
+
 /*
  * Here we parse a duration formated as <hrs>h<mins>m
  * We write the result into the variable dur points to.
@@ -752,7 +806,7 @@ do_dur(int ac, char *av[])
 {
 	day_t day = -1;
 	tm_t t;
-	tm_t *date;
+	tm_t *date = &t;
 	size_t dur;
 	size_t chunks = 1;
 	char *slash = strchr(av[2], '/');
@@ -874,7 +928,7 @@ do_list(int ac, char *av[])
 	char *ls_target;
 	extern char *optarg;
 
-	while ((cc = getopt(ac, av, ":t:a:")) != -1) {
+	while ((cc = getopt(ac, av, ":t:a:d")) != -1) {
 		switch (cc) {
 
 		case 't':
@@ -897,6 +951,10 @@ do_list(int ac, char *av[])
 			ls_target = optarg;
 			break;
 
+		case 'd':
+			flag = flag ^ 16;
+			break;
+
 		/* fallthrough */
 		case ':':
 		case '?':
@@ -912,7 +970,7 @@ do_list(int ac, char *av[])
 	}
 
 	if (strcmp("general", ls_target) == 0) {
-		list_gen_todo();
+		list_gen_todo(flag);
 		return (0);
 	}
 
@@ -952,6 +1010,8 @@ static plan_cmd_t cmd_tbl[] = {
 	{"destroy", do_destroy, HELP_DESTROY},
 	{NULL, NULL, NULL},
 	{"rename", do_rename, HELP_RENAME},
+	{NULL, NULL, NULL},
+	{"describe", do_describe, HELP_DESCRIBE},
 	{NULL, NULL, NULL},
 	{"set", do_set, HELP_SET},
 	{NULL, NULL, NULL},
@@ -995,6 +1055,11 @@ usage(int ix, int usage_bool)
 		printf(
 		    "\trename <day|date>/<activity> <day|date>/<activity>\n");
 		printf("\trename <day|date>/@<todo> <day|date>/@<todo>\n");
+		break;
+
+	case HELP_DESCRIBE:
+		printf("\tdescribe <day|date>/<activity> \"<description>\"\n");
+		printf("\tdescribe <day|date>/@<todo> \"<description>\"\n");
 		break;
 
 	case HELP_SET:

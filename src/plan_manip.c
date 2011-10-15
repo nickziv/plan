@@ -183,8 +183,8 @@ opendate(tm_t *date)
 
 
 	strftime(ypath, sizeof (ypath), "%Y", date);
-	strftime(mpath, sizeof (ypath), "%m", date);
-	strftime(dpath, sizeof (ypath), "%d", date);
+	strftime(mpath, sizeof (mpath), "%m", date);
+	strftime(dpath, sizeof (dpath), "%d", date);
 
 	mkdirat(dates_fd, ypath, ALLRWX);
 
@@ -418,7 +418,7 @@ static ra_err_t realloc_err;
  * The below macro was used
  */
 static void
-read_todo_dir(int tfd)
+read_todo_dir(int tfd, int det)
 {
 
 	struct dirent *de = NULL;
@@ -472,19 +472,34 @@ read_todo_dir(int tfd)
 			PLAN_GOTHERE(12);
 		t[i]->td_name = name_str;
 			PLAN_GOTHERE(13);
-		int todo_fd = openat(tfd, de->d_name, O_XATTR | O_RDWR);
+		int todo_fd = openat(tfd, de->d_name, O_RDWR);
 			PLAN_GOTHERE(14);
 		int time_xattr = openat(todo_fd, "time",
 			O_XATTR | O_RDWR | O_CREAT, ALLRWX);
 			PLAN_GOTHERE(15);
 
 		PLAN_READ_TODO(t[i]->td_name, t[i]->td_time);
+
 		read(time_xattr, &t[i]->td_time,
 			sizeof (int));
+		
+		struct stat det_stat;
+		size_t len;
+		if (det) {
+			fstat(todo_fd, &det_stat);
+			len = det_stat.st_size + 1; /* +1 for \0 */
+			if (len - 1) {
+				t[i]->td_det = umem_zalloc(len, UMEM_NOFAIL);
+				read(todo_fd, t[i]->td_det, len);
+			}
+		}
+
 		PLAN_READ_TODO(t[i]->td_name, t[i]->td_time);
 			PLAN_GOTHERE(16);
+
 		close(time_xattr);
 			PLAN_GOTHERE(17);
+
 		close(todo_fd);
 		i++;
 	}
@@ -507,7 +522,7 @@ mk_copy_act(act_t *src, act_t **des)
  *     open the attrs of those names
  */
 static void
-read_act_dir(int afd, size_t base, size_t off)
+read_act_dir(int afd, size_t base, size_t off, int det)
 {
 	struct dirent *de = NULL;
 	int time_xattr;
@@ -574,6 +589,17 @@ read_act_dir(int afd, size_t base, size_t off)
 			exit(0);
 		}
 
+		struct stat det_stat;
+		size_t len;
+		if (det) {
+			fstat(act_fd, &det_stat);
+			len = det_stat.st_size + 1; /* +1 for \0 */
+			if (len-1) {
+				a[i]->act_det = umem_zalloc(len, UMEM_NOFAIL);
+				read(act_fd, a[i]->act_det, len);
+			}
+		}
+
 		// lseek(time_xattr, 0, SEEK_SET);
 		// lseek(dyn_xattr, 0, SEEK_SET);
 		lseek(dur_xattr, 0, SEEK_SET);
@@ -583,16 +609,6 @@ read_act_dir(int afd, size_t base, size_t off)
 		PLAN_READ_ACT(a[i]->act_name, a[i]->act_time, a[i]->act_dur);
 		ntimes--;
 
-
-		if (!(a[i]->act_dyn) && ntimes) {
-			/*
-			 * This is really here, in case I screw up. When
-			 * setting the duration as a chunked duration, we also
-			 * set the dyn property to true. BUT, if this is not
-			 * done, for whatever reason, we're going to error out
-			 * really loudly.
-			 */
-		}
 
 		/*
 		 * If we know that the action is dynamic, we can place
@@ -698,7 +714,7 @@ realloc_acts(day_t day, tm_t *date, size_t base, size_t off)
 	}
 	int afd = openacts(dfd);
 
-	read_act_dir(afd, base, off);
+	read_act_dir(afd, base, off, 0);
 
 	/*
 	 * We now take all of the data we have about the actions, and try to
@@ -1225,7 +1241,6 @@ set_details_act(char *n, int day, tm_t *date, char *det)
 	close(adfd);
 	close(dfd);
 	return (0);
-
 }
 
 
@@ -1240,11 +1255,7 @@ set_details_todo(char *n, int day, tm_t *date, char *det)
 		dfd = openday(day);
 	}
 
-	if (day == -1) {
-		tdfd = todos_fd;
-	} else {
-		tdfd = opentodos(dfd);
-	}
+	tdfd = opentodos(dfd);
 	int tfd = openat(tdfd, n, O_RDWR);
 	size_t strsz = strlen(det);
 	write(tfd, det, strsz);
@@ -1276,6 +1287,7 @@ list(day_t d, tm_t *date, int flag, int *no_print)
 	int todo = LS_IS_TODO(flag);
 	int is_prday = LS_IS_PRDAY(flag);
 	int is_prboth = LS_IS_PRBOTH(flag);
+	int pr_desc = LS_IS_DESC(flag);
 	int dfd;
 	int have_date;
 
@@ -1312,7 +1324,7 @@ skip_exit:;
 
 		afd = openacts(dfd);
 
-		read_act_dir(afd, base, off);
+		read_act_dir(afd, base, off, pr_desc);
 
 
 		if (a_elems == 0) {
@@ -1392,6 +1404,11 @@ not_assigned_time:;
 				dyn_fmt,
 				&(time_fmt[0]),
 				&(dur_fmt[0]));
+
+			if (pr_desc && a[acnt]->act_det) {
+				printf("  | %s\n", a[acnt]->act_det);
+			}
+
 			acnt += seq_acts;
 		}
 		free_act_arr();
@@ -1401,7 +1418,7 @@ noprint_acts:;
 
 	if (todo) {
 		tfd = opentodos(dfd);
-		read_todo_dir(tfd);
+		read_todo_dir(tfd, pr_desc);
 		if (t_elems == 0) {
 			*no_print = 1;
 			goto noprint_todos;
@@ -1438,6 +1455,9 @@ noprint_acts:;
 			printf("%-20s %6s\n",
 				t[tcnt]->td_name,
 				&(time_fmt[0]));
+			if (pr_desc && t[tcnt]->td_det) {
+				printf("%s\n", t[tcnt]->td_det);
+			}
 			tcnt++;
 		}
 noprint_todos:;
@@ -1451,11 +1471,12 @@ noprint_todos:;
  * TODO: Should roll this into list().
  */
 void
-list_gen_todo()
+list_gen_todo(flag)
 {
 	char time_fmt[10];
 	int tfd = opentodos(-1);
-	read_todo_dir(tfd);
+	int det = LS_IS_DESC(flag);
+	read_todo_dir(tfd, det);
 	if (t_elems == 0) {
 		goto noprint_todos;
 	}

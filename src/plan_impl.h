@@ -33,6 +33,7 @@
 #define	LS_IS_TODO(f)	(f & 2)
 #define	LS_IS_PRDAY(f)	(f & 4)
 #define	LS_IS_PRBOTH(f)	(f & 8)
+#define LS_IS_DESC(f)	(f & 16)
 
 typedef enum day {
 	SUN,
