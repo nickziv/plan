@@ -911,11 +911,14 @@ set_awake(day_t day, tm_t *date, size_t base, size_t off)
 	 */
 	int awake_xattr = openat(dfd, "awake",
 				O_XATTR | O_CREAT | O_RDWR, ALLRWX);
+
 	int afd = openacts(dfd);
 
 
 	write(awake_xattr, &base, sizeof (size_t));
+
 	write(awake_xattr, &off, sizeof (size_t));
+
 	close(awake_xattr);
 
 	commit_act_arr(afd);
@@ -1316,7 +1319,11 @@ skip_exit:;
 	int tfd;
 	size_t base;
 	size_t off;
-	get_awake_range(d, 0, &base, &off);
+	if (have_date) {
+		get_awake_range(d, date, &base, &off);
+	} else {
+		get_awake_range(d, 0, &base, &off);
+	}
 
 	if (act) {
 
