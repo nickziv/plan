@@ -60,6 +60,9 @@ extern short month_day_tbl[];
 extern umem_cache_t *act_cache;
 extern umem_cache_t *todo_cache;
 
+extern void atomic_read(int, void*, size_t);
+extern void atomic_write(int, void*, size_t);
+
 /*
  * Here we compare two activities. But since this function is to be used on an
  * array of _pointer_ and NOT on an array of activities, we pass pointers to
@@ -240,8 +243,8 @@ get_awake_range(int day, tm_t *date, size_t *s, size_t *off)
 		*s = 0;
 		*off = 1440;
 	}
-	read(awake_xattr, s, sizeof (size_t));
-	read(awake_xattr, off, sizeof (size_t));
+	atomic_read(awake_xattr, s, sizeof (size_t));
+	atomic_read(awake_xattr, off, sizeof (size_t));
 	close(awake_xattr);
 	close(dur_xattr);
 	close(dfd);
@@ -275,9 +278,9 @@ create_act(char *n, day_t day, tm_t *date)
 		O_XATTR | O_CREAT | O_RDWR, ALLRWX);
 	int dyn_xattr = openat(afd, "dyn",
 		O_XATTR | O_CREAT | O_RDWR, ALLRWX);
-	write(time_xattr, &tval, sizeof (int));
-	write(dur_xattr, &dval, sizeof (size_t));
-	write(dyn_xattr, &yval, sizeof (char));
+	atomic_write(time_xattr, &tval, sizeof (int));
+	atomic_write(dur_xattr, &dval, sizeof (size_t));
+	atomic_write(dyn_xattr, &yval, sizeof (char));
 	close(dfd);
 	close(adfd);
 	close(afd);
@@ -317,7 +320,7 @@ create_todo(char *n, int day, tm_t *date)
 		perror("ctodo");
 		exit(0);
 	}
-	write(time_xattr, &tval, sizeof (int));
+	atomic_write(time_xattr, &tval, sizeof (int));
 	close(dfd);
 	close(tdfd);
 	close(tfd);
@@ -480,7 +483,7 @@ read_todo_dir(int tfd, int det)
 
 		PLAN_READ_TODO(t[i]->td_name, t[i]->td_time);
 
-		read(time_xattr, &t[i]->td_time,
+		atomic_read(time_xattr, &t[i]->td_time,
 			sizeof (int));
 		
 		struct stat det_stat;
@@ -490,7 +493,7 @@ read_todo_dir(int tfd, int det)
 			len = det_stat.st_size + 1; /* +1 for \0 */
 			if (len - 1) {
 				t[i]->td_det = umem_zalloc(len, UMEM_NOFAIL);
-				read(todo_fd, t[i]->td_det, len);
+				atomic_read(todo_fd, t[i]->td_det, len);
 			}
 		}
 
@@ -576,18 +579,10 @@ read_act_dir(int afd, size_t base, size_t off, int det)
 		struct stat time_stat;
 		fstat(time_xattr, &time_stat);
 		int ntimes = (time_stat.st_size)/sizeof (int);
-		int dxr = read(dur_xattr, &(a[i]->act_dur),
+		atomic_read(dur_xattr, &(a[i]->act_dur),
 			sizeof (size_t));
-		if (dxr == -1) {
-			perror("plan - dur_xattr RD");
-			exit(0);
-		}
-		int yxr = read(dyn_xattr, &(a[i]->act_dyn),
+		atomic_read(dyn_xattr, &(a[i]->act_dyn),
 			sizeof (char));
-		if (yxr == -1) {
-			perror("plan - dyn_xattr RD");
-			exit(0);
-		}
 
 		struct stat det_stat;
 		size_t len;
@@ -596,7 +591,7 @@ read_act_dir(int afd, size_t base, size_t off, int det)
 			len = det_stat.st_size + 1; /* +1 for \0 */
 			if (len-1) {
 				a[i]->act_det = umem_zalloc(len, UMEM_NOFAIL);
-				read(act_fd, a[i]->act_det, len);
+				atomic_read(act_fd, a[i]->act_det, len);
 			}
 		}
 
@@ -604,7 +599,7 @@ read_act_dir(int afd, size_t base, size_t off, int det)
 		// lseek(dyn_xattr, 0, SEEK_SET);
 		lseek(dur_xattr, 0, SEEK_SET);
 
-		txr = read(time_xattr, &(a[i]->act_time),
+		atomic_read(time_xattr, &(a[i]->act_time),
 			sizeof (int));
 		PLAN_READ_ACT(a[i]->act_name, a[i]->act_time, a[i]->act_dur);
 		ntimes--;
@@ -666,7 +661,7 @@ vm_set:;
 			PLAN_NTIMES(ntimes);
 			mk_copy_act(a[i], &(a[(i+1)]));
 			i++;
-			txr = read(time_xattr, &(a[i]->act_time),
+			atomic_read(time_xattr, &(a[i]->act_time),
 				sizeof (int));
 			PLAN_READ_ACT(a[i]->act_name, a[i]->act_time,
 				a[i]->act_dur);
@@ -806,7 +801,7 @@ commit_act_arr(int afd)
 		int time_xattr = a[j]->act_fd_time;
 		int dur_xattr = a[j]->act_fd_dur;
 
-		write(time_xattr, &a[j]->act_time, sizeof (int));
+		atomic_write(time_xattr, &a[j]->act_time, sizeof (int));
 
 		/*
 		 * In some cases (like modifying time xattr), we don't need to
@@ -814,7 +809,7 @@ commit_act_arr(int afd)
 		 * function.
 		 */
 		if (write_dur) {
-			write(dur_xattr, &a[j]->act_dur, sizeof (size_t));
+			atomic_write(dur_xattr, &a[j]->act_dur, sizeof (size_t));
 		}
 
 		PLAN_COMMIT_ACT(a[j]->act_name, a[j]->act_time, a[j]->act_dur);
@@ -915,9 +910,9 @@ set_awake(day_t day, tm_t *date, size_t base, size_t off)
 	int afd = openacts(dfd);
 
 
-	write(awake_xattr, &base, sizeof (size_t));
+	atomic_write(awake_xattr, &base, sizeof (size_t));
 
-	write(awake_xattr, &off, sizeof (size_t));
+	atomic_write(awake_xattr, &off, sizeof (size_t));
 
 	close(awake_xattr);
 
@@ -984,7 +979,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 		perror("set_dur_open_dur_xattr");
 		exit(0);
 	}
-	read(dur_xattr, &prev_dur, sizeof (size_t));
+	atomic_read(dur_xattr, &prev_dur, sizeof (size_t));
 
 	int time_xattr;
 	struct stat time_st;
@@ -1005,7 +1000,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 
 	PLAN_PRECOMMIT_DUR(n, dur);
 
-	write(dur_xattr, &dur, sizeof (size_t));
+	atomic_write(dur_xattr, &dur, sizeof (size_t));
 	close(dur_xattr);
 	int *time_prev_buf;
 
@@ -1014,7 +1009,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 	 * allocation fails.
 	 */
 	time_prev_buf = umem_alloc(time_st.st_size, UMEM_NOFAIL);
-	read(time_xattr, time_prev_buf, time_st.st_size);
+	atomic_read(time_xattr, time_prev_buf, time_st.st_size);
 	lseek(time_xattr, 0, SEEK_SET);
 
 	/*
@@ -1022,7 +1017,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 	 * need to make sure that it's size is adjusted to the size of an int.
 	 */
 	if (chunks == 1) {
-		write(time_xattr, &nfill, sizeof (int));
+		atomic_write(time_xattr, &nfill, sizeof (int));
 		lseek(time_xattr, 0, SEEK_SET);
 	}
 
@@ -1044,13 +1039,13 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 		dyn_xattr = openat(afd, "dyn", O_XATTR | O_CREAT | O_RDWR,
 			ALLRWX);
 
-		read(dyn_xattr, &prev_dyn, sizeof (char));
+		atomic_read(dyn_xattr, &prev_dyn, sizeof (char));
 		lseek(dyn_xattr, 0, SEEK_SET);
-		write(dyn_xattr, &yes_dyn, sizeof (char));
+		atomic_write(dyn_xattr, &yes_dyn, sizeof (char));
 		lseek(dyn_xattr, 0, SEEK_SET);
 
 		while (i < chunks) {
-			write(time_xattr, &time_fill, sizeof (int));
+			atomic_write(time_xattr, &time_fill, sizeof (int));
 			i++;
 		}
 
@@ -1071,13 +1066,13 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 		/* rollback duration */
 		dur_xattr =
 			openat(afd, "dur", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
-		write(dur_xattr, &prev_dur, sizeof (size_t));
+		atomic_write(dur_xattr, &prev_dur, sizeof (size_t));
 
 		/* rollback time */
-		write(time_xattr, &time_prev_buf, time_st.st_size);
+		atomic_write(time_xattr, &time_prev_buf, time_st.st_size);
 
 		/* rollback dyn */
-		write(dyn_xattr, &prev_dyn, sizeof (char));
+		atomic_write(dyn_xattr, &prev_dyn, sizeof (char));
 
 		goto skip_commit;
 	}
@@ -1143,10 +1138,10 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 	PLAN_GOTHERE(dyn);
 
 
-	read(time_xattr, &old_time, sizeof (int));
+	atomic_read(time_xattr, &old_time, sizeof (int));
 	lseek(time_xattr, 0, SEEK_SET);
 
-	read(dur_xattr, &dur, sizeof (size_t));
+	atomic_read(dur_xattr, &dur, sizeof (size_t));
 	lseek(dur_xattr, 0, SEEK_SET);
 
 	PLAN_GOTHERE(dyn);
@@ -1163,11 +1158,11 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 
 	PLAN_GOTHERE(dyn);
 
-	write(dyn_xattr, &dyn, sizeof (char));
+	atomic_write(dyn_xattr, &dyn, sizeof (char));
 	PLAN_GOTHERE(dyn);
 
 	if (!dyn) {
-		write(time_xattr, &time, sizeof (int));
+		atomic_write(time_xattr, &time, sizeof (int));
 		lseek(time_xattr, 0, SEEK_SET);
 	}
 	PLAN_GOTHERE(dyn);
@@ -1186,7 +1181,7 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 			ALLRWX);
 		dyn_xattr = openat(afd, "dyn", O_RDWR | O_XATTR | O_CREAT,
 			ALLRWX);
-		write(time_xattr, &old_time, sizeof (int));
+		atomic_write(time_xattr, &old_time, sizeof (int));
 		close(time_xattr);
 	}
 
@@ -1215,7 +1210,7 @@ set_time_todo(char *n, int day, tm_t *date, uint64_t time)
 		exit(0);
 	}
 	int time_xattr = openat(tfd, "time", O_XATTR | O_CREAT, ALLRWX);
-	write(time_xattr, &time, sizeof (uint64_t));
+	atomic_write(time_xattr, &time, sizeof (uint64_t));
 	close(dfd);
 	close(tfd);
 	close(time_xattr);
@@ -1239,7 +1234,7 @@ set_details_act(char *n, int day, tm_t *date, char *det)
 	/*
 	 * Details are stored in the activity.
 	 */
-	write(afd, det, strsz);
+	atomic_write(afd, det, strsz);
 	close(afd);
 	close(adfd);
 	close(dfd);
@@ -1261,7 +1256,7 @@ set_details_todo(char *n, int day, tm_t *date, char *det)
 	tdfd = opentodos(dfd);
 	int tfd = openat(tdfd, n, O_RDWR);
 	size_t strsz = strlen(det);
-	write(tfd, det, strsz);
+	atomic_write(tfd, det, strsz);
 	close(tfd);
 	close(tdfd);
 	close(dfd);
