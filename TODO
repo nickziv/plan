@@ -1,0 +1,20 @@
+SPLIT:
+make a "split" command, which copies the activities in the specified day into
+the specified date.
+
+if just a date arg is specified, the weekday is copied into the date.
+
+Will not overwrite data in <date> unless forced (-f).
+
+plan split [-f] sun <date> /* makes date identical to sunday */
+
+plan split [-f] <date> /* makes date identical to whatever day <date> is in the */
+		  /* calendar */
+
+COPY:
+similar to split, but can only copy from day to day or date to date.
+
+Will not overwrite data in <to_da*> unless forced (-f).
+
+plan copy [-f] <from_day> <to_day>
+plan copy [-f] <from_date> <to_date>
