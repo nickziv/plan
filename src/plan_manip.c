@@ -1264,9 +1264,9 @@ set_details_todo(char *n, int day, tm_t *date, char *det)
 }
 
 /*
- * XXX: Also, for todos, we can list both recurring, weekly todos and
- * date-todos, in the same list, without distinguishing the day and
- * the date.
+ * This function prints a list all of the activities and/or todos in a given
+ * day or date, to stdout. It sets the integer pointed to by `no_print`, to 1
+ * if anything was printed, or 0 if not.
  */
 void
 list(day_t d, tm_t *date, int flag, int *no_print)
