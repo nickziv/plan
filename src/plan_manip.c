@@ -727,7 +727,16 @@ realloc_acts(day_t day, tm_t *date, size_t base, size_t off)
 alloc_again:;
 	while (j <= (a_elems-1) && a_elems != 0) {
 		PLAN_REALLOC_LOOP(a[j]);
-		a[j]->act_day = day;
+
+		if (!date) {
+			a[j]->act_day = day;
+		} else {
+			a[j]->act_day = -1;
+			a[j]->act_date.tm_mon = date->tm_mon;
+			a[j]->act_date.tm_mday = date->tm_mday;
+			a[j]->act_date.tm_year = date->tm_year;
+		}
+
 		if ((a[j]->act_dyn == 0 && !k)) {
 			j++;
 			continue;
@@ -868,14 +877,23 @@ static void
 rae_code_print(ra_err_t *re)
 {
 
+	char strbuf[30];
+	char *str = NULL;
+
+	if (re->rae_act->act_day == -1) {
+		strftime(strbuf, 30, "%Y-%m-%d", &(re->rae_act->act_date));
+		str = strbuf;
+	} else {
+		str = daystr[(re->rae_act->act_day)];
+	}
+
 	if (re->rae_code == RAE_CODE_FIT) {
-		fprintf(stderr, FIT_ERR, daystr[(re->rae_act->act_day)],
-			re->rae_act->act_name);
+		fprintf(stderr, FIT_ERR, str, re->rae_act->act_name);
 	}
 
 	if (re->rae_code == RAE_CODE_ARRANGE) {
 		fprintf(stderr, "%s: Couldn't rearrange activity %s\n",
-			daystr[(re->rae_act->act_day)], re->rae_act->act_name);
+			str, re->rae_act->act_name);
 	}
 }
 
@@ -1302,6 +1320,7 @@ list(day_t d, tm_t *date, int flag, int *no_print)
 			dfd = opendate(date);
 		} else {
 			if (d > -1) {
+try_day:;
 				dfd = openday(date->tm_wday);
 				goto skip_exit;
 			}
@@ -1328,6 +1347,18 @@ skip_exit:;
 
 		read_act_dir(afd, base, off, pr_desc);
 
+
+		/*
+		 * Even though we have a date directory, it's empty, so we
+		 * might as well close dfd, and open the corresponding day
+		 * instead.
+		 */
+		if (a_elems == 0 && have_date) {
+			have_date = 0;
+			close(dfd);
+			close(afd);
+			goto try_day;
+		}
 
 		if (a_elems == 0) {
 			*no_print = 1;

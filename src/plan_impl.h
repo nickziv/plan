@@ -80,6 +80,7 @@ typedef struct act {
 	size_t		act_name_len;
 	char		act_dyn;
 	day_t		act_day;
+	tm_t		act_date;
 	char		*act_name;
 	int		act_time;
 	size_t		act_dur;
