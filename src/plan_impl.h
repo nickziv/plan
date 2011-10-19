@@ -35,6 +35,10 @@
 #define	LS_IS_PRBOTH(f)	(f & 8)
 #define LS_IS_DESC(f)	(f & 16)
 
+#define	THIS	0
+#define	GEN	1
+#define	NEXT	2
+
 typedef enum day {
 	SUN,
 	MON,

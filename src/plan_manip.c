@@ -1286,8 +1286,11 @@ set_details_todo(char *n, int day, tm_t *date, char *det)
  * day or date, to stdout. It sets the integer pointed to by `no_print`, to 1
  * if anything was printed, or 0 if not.
  */
+#define	POST_NL 1
+#define NO_NL	0
+#define	PRE_NL	-1
 void
-list(day_t d, tm_t *date, int flag, int *no_print)
+list(day_t d, tm_t *date, int flag, int nl)
 {
 	char time_fmt[10];
 	char dur_fmt[10];
@@ -1361,11 +1364,9 @@ skip_exit:;
 		}
 
 		if (a_elems == 0) {
-			*no_print = 1;
 			goto noprint_acts;
 		}
 
-		*no_print = 0;
 
 		if (!is_prboth && is_prday && date == NULL) {
 			printf("%s\n", daystr[d]);
@@ -1387,10 +1388,15 @@ skip_exit:;
 
 		cur_usage = get_total_usage();
 
+		if (nl == PRE_NL) {
+			printf("\n");
+		}
+
 		printf("(%d/%d)\n", cur_usage, off);
 
 		printf("%-20s %6s %7s %7s\n",
 			"NAME", "DYN", "TIME", "DUR");
+
 
 		while (acnt < a_elems) {
 
@@ -1444,6 +1450,11 @@ not_assigned_time:;
 
 			acnt += seq_acts;
 		}
+
+		if (nl == POST_NL) {
+			printf("\n");
+		}
+
 		free_act_arr();
 noprint_acts:;
 		close(afd);
@@ -1453,11 +1464,9 @@ noprint_acts:;
 		tfd = opentodos(dfd);
 		read_todo_dir(tfd, pr_desc);
 		if (t_elems == 0) {
-			*no_print = 1;
 			goto noprint_todos;
 		}
 
-		*no_print = 0;
 
 		if (!is_prboth && is_prday && date == NULL) {
 			printf("%s\n", daystr[d]);
@@ -1477,6 +1486,10 @@ noprint_acts:;
 
 		qsort(t, (t_elems-1), sizeof (todo_t *), comp_todo_ptrs);
 		int tcnt = 0;
+		if (nl == PRE_NL) {
+			printf("\n");
+		}
+
 		printf("%-20s %6s \n",
 			"NAME", "TIME");
 		while (tcnt < t_elems) {
@@ -1493,6 +1506,11 @@ noprint_acts:;
 			}
 			tcnt++;
 		}
+
+		if (nl == POST_NL) {
+			printf("\n");
+		}
+
 noprint_todos:;
 		close(tfd);
 	}
@@ -1538,88 +1556,33 @@ noprint_todos:;
 
 
 void
-list_week(int flag)
+list_week(int flag, int week_type)
 {
 	int i = 0;
-	int np;
-	while (i < 7) {
-		list(i, 0, (flag ^ 4), &np);
+	tm_t *t = NULL;
+	int fl = flag;
 
-		if (!np && i != 6) {
-			printf("\n");
-		}
-
-		if (LS_IS_ACT(flag)) {
-			free_act_arr();
-		}
-
-		if (LS_IS_TODO(flag)) {
-			free_todo_arr();
-		}
-
-		i++;
-	}
-}
-
-/*
- * list_this_week, like list_week, lists the entire week, but replaces the
- * activities/todos for individual weekdays, with the activities/todos for
- * individual dates, if the current week we're in overlaps with dates that have
- * been created.
- */
-void
-list_this_week(int flag)
-{
-	int i = 0;
-	int np = 0;
-	time_t ct = time(NULL);
-	tm_t *t;
-	t = localtime(&ct);
-	if (t->tm_wday != 0) {
-		ct -= (1440*60*t->tm_wday);
-	}
-
-	while (i < 7) {
+	if (week_type != GEN) {
+		time_t ct = time(NULL);
 		t = localtime(&ct);
-		ct += (1440*60);
-		list(i, t, (flag ^ 8), &np);
 
-		if (!np && i != 6) {
-			printf("\n");
+		if (t->tm_wday != 0) {
+			ct -= (1440*60*t->tm_wday);
 		}
 
-		if (LS_IS_ACT(flag)) {
-			free_act_arr();
+		if (week_type == NEXT) {
+			ct += (1440*60*7);
 		}
-
-		if (LS_IS_TODO(flag)) {
-			free_todo_arr();
-		}
-
-		i++;
+		fl = fl ^ 8;
+	} else {
+		fl = fl ^ 4;
 	}
-}
-
-void
-list_next_week(int flag)
-{
-	int i = 0;
-	int np = 0;
-	time_t ct = time(NULL);
-	tm_t *t;
-	t = localtime(&ct);
-	if (t->tm_wday != 0) {
-		ct -= (1440*60*t->tm_wday);
-	}
-	ct += (1440*60*7);
 
 	while (i < 7) {
-		t = localtime(&ct);
-		ct += (1440*60);
-		list(i, t, (flag ^ 8), &np);
-
-		if (!np && i != 6) {
-			printf("\n");
+		if (i != 6) {
+			list(i, t, fl, POST_NL);
+		} else {
+			list(i, t, fl, NO_NL);
 		}
 
 		if (LS_IS_ACT(flag)) {
@@ -1637,10 +1600,8 @@ list_next_week(int flag)
 void
 list_today(int flag)
 {
-	int np;
 	time_t cur_time = time(NULL);
 	tm_t *t = localtime(&cur_time);
-	list(t->tm_wday, NULL, (flag ^ 4), &np);
-	printf("\n");
-	list(-1, t, (flag ^ 4), &np);
+	list(t->tm_wday, NULL, (flag ^ 4), NO_NL);
+	list(-1, t, (flag ^ 4), PRE_NL);
 }

@@ -74,7 +74,7 @@ extern int set_time_act(char *, int, tm_t *, int, char);
 extern int set_details_act(char *, int, tm_t *, char *);
 extern int set_details_todo(char *, int, tm_t *, char *);
 extern void list(day_t, tm_t *, int, int *);
-extern void list_week(int);
+extern void list_week(int, int);
 extern void list_today(int);
 extern void list_this_week(int);
 extern void list_next_week(int);
@@ -974,17 +974,17 @@ do_list(int ac, char *av[])
 	}
 
 	if (strcmp("week", ls_target) == 0) {
-		list_week(flag);
+		list_week(flag, GEN);
 		return (0);
 	}
 
 	if (strcmp("this_week", ls_target) == 0) {
-		list_this_week(flag);
+		list_week(flag, THIS);
 		return (0);
 	}
 
 	if (strcmp("next_week", ls_target) == 0) {
-		list_next_week(flag);
+		list_week(flag, NEXT);
 		return (0);
 	}
 
