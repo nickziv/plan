@@ -1319,8 +1319,8 @@ list(day_t d, tm_t *date, int flag, int *no_print)
 		if (have_date) {
 			dfd = opendate(date);
 		} else {
-			if (d > -1) {
 try_day:;
+			if (d > -1) {
 				dfd = openday(date->tm_wday);
 				goto skip_exit;
 			}
