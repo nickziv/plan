@@ -18,3 +18,6 @@ Will not overwrite data in <to_da*> unless forced (-f).
 
 plan copy [-f] <from_day> <to_day>
 plan copy [-f] <from_date> <to_date>
+
+TEST SUITE:
+Make a black-box test suite that runs at build-time.
