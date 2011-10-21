@@ -877,6 +877,10 @@ static void
 rae_code_print(ra_err_t *re)
 {
 
+	if (re->rae_code == RAE_CODE_SUCCESS) {
+		return;
+	}
+
 	char strbuf[30];
 	char *str = NULL;
 
