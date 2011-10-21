@@ -1368,6 +1368,10 @@ skip_exit:;
 		}
 
 
+		if (nl == PRE_NL) {
+			printf("\n");
+		}
+
 		if (!is_prboth && is_prday && date == NULL) {
 			printf("%s\n", daystr[d]);
 		}
@@ -1388,9 +1392,6 @@ skip_exit:;
 
 		cur_usage = get_total_usage();
 
-		if (nl == PRE_NL) {
-			printf("\n");
-		}
 
 		printf("(%d/%d)\n", cur_usage, off);
 
