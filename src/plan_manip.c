@@ -1566,9 +1566,10 @@ list_week(int flag, int week_type)
 	int i = 0;
 	tm_t *t = NULL;
 	int fl = flag;
+	time_t ct;
 
 	if (week_type != GEN) {
-		time_t ct = time(NULL);
+		ct = time(NULL);
 		t = localtime(&ct);
 
 		if (t->tm_wday != 0) {
@@ -1578,6 +1579,9 @@ list_week(int flag, int week_type)
 		if (week_type == NEXT) {
 			ct += (1440*60*7);
 		}
+
+		t = localtime(&ct);
+
 		fl = fl ^ 8;
 	} else {
 		fl = fl ^ 4;
@@ -1596,6 +1600,11 @@ list_week(int flag, int week_type)
 
 		if (LS_IS_TODO(flag)) {
 			free_todo_arr();
+		}
+
+		if (t) {
+			ct += (1440*60);
+			t = localtime(&ct);
 		}
 
 		i++;
