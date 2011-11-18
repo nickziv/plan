@@ -73,7 +73,7 @@ extern int set_dur(char *, int, tm_t *, size_t, size_t);
 extern int set_time_act(char *, int, tm_t *, int, char);
 extern int set_details_act(char *, int, tm_t *, char *);
 extern int set_details_todo(char *, int, tm_t *, char *);
-extern void list(day_t, tm_t *, int, int *);
+extern void list(day_t, tm_t *, int, int);
 extern void list_week(int, int);
 extern void list_today(int);
 extern void list_this_week(int);
@@ -151,7 +151,7 @@ parse_time(char *t, int *time)
 {
 	/* time is 24hr format hh:mm */
 	char *c = t;
-	PLAN_GOTHERE(c);
+	PLAN_GOTHERE((int)c);
 	if (*c > '2') {
 		printf("Hours are a 2-digit value\n.");
 		printf("The first digit can't be greater than '2'\n");
@@ -163,33 +163,33 @@ parse_time(char *t, int *time)
 	hrs = (*c - 48) * 10;
 	c++;
 	hrs += (*c - 48);
-	PLAN_GOTHERE(hrs);
+	PLAN_GOTHERE((int)hrs);
 	if (hrs > 23) {
 		printf("The max hour value is 23. You speicified %d\n",
 			hrs);
 		exit(0);
 	}
-	PLAN_GOTHERE(0);
+	PLAN_GOTHERE((int)0);
 
 	/* to skip the ':' */
 	c += 2;
 	int mins = 0;
 
 	mins = (*c - 48) * 10;
-	PLAN_GOTHERE(mins);
+	PLAN_GOTHERE((int)mins);
 	c++;
 
 	mins += (*c - 48);
-	PLAN_GOTHERE(mins);
+	PLAN_GOTHERE((int)mins);
 
 	if (mins > 59) {
 		printf("The max minute value is 59. You speicified %d\n",
 			hrs);
 		exit(0);
 	}
-	PLAN_GOTHERE(mins);
+	PLAN_GOTHERE((int)mins);
 	mins += (hrs * 60);
-	PLAN_GOTHERE(mins);
+	PLAN_GOTHERE((int)mins);
 	*time = mins;
 	return (0);
 }
@@ -627,18 +627,18 @@ parse_dur(char *d, size_t *dur, size_t *chunks)
 		return (-1);
 	}
 
-	PLAN_GOTHERE(c);
+	PLAN_GOTHERE((int)c);
 
 	hrs = *c - 48;
 	hrs *= 10;
 	c++;
-	PLAN_GOTHERE(c);
+	PLAN_GOTHERE((int)c);
 	hrs += *c - 48;
 	c += 2; /* skip the 'h' */
 	mins = *c - 48;
 	mins *= 10;
 	c++;
-	PLAN_GOTHERE(c);
+	PLAN_GOTHERE((int)c);
 	mins += *c - 48;
 
 	if (mins > 59 || hrs > 24) {
@@ -660,9 +660,9 @@ parse_dur(char *d, size_t *dur, size_t *chunks)
 	}
 
 	c++;	/* Now we're at 'm' */
-	PLAN_GOTHERE(c);
+	PLAN_GOTHERE((int)c);
 	c++;	/* and /now/ we're at '*' */
-	PLAN_GOTHERE(c);
+	PLAN_GOTHERE((int)c);
 
 	if (*c != '*') {
 		printf("Expected '*', found '%c' instead, in \"%s\"\n",
@@ -671,7 +671,7 @@ parse_dur(char *d, size_t *dur, size_t *chunks)
 	}
 
 	c++;
-	PLAN_GOTHERE(c);
+	PLAN_GOTHERE((int)c);
 	char *invch;
 	*chunks = (size_t)strtol(c, &invch, 0);
 
@@ -719,7 +719,7 @@ do_awake(int ac, char *av[])
 	 * but we're never going to notice the discrepancy in overflow-max,
 	 * because we never take an invalid input.
 	 */
-	ret = parse_time(c, &base);
+	ret = parse_time(c, (int*)&base);
 	if (ret < 0) {
 		return (-1);
 	}
@@ -780,7 +780,7 @@ do_time(int ac, char *av[])
 
 	if (*(av[1]+5) >= 48 && *(av[1]+5) <= 57) {
 		int r = parse_time((av[1]+5), &time);
-		PLAN_GOTHERE(time);
+		PLAN_GOTHERE((int)time);
 		if (r == -1) {
 			usage(cur_cmd, 1);
 		}
@@ -882,7 +882,9 @@ do_set(int ac, char *av[])
 	if (*eq == NULL) {
 		printf(
 		    "An '=' must separate the property name from the value\n");
+		exit(0);
 	}
+
 	size_t eqlen = eq - av[1];
 	int do_ret = -1;
 	int i = 0;

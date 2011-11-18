@@ -535,7 +535,7 @@ read_act_dir(int afd, size_t base, size_t off, int det)
 	DIR *acts_dir = fdopendir(afd);
 	int dotdirs = 1;
 	while ((de = readdir(acts_dir)) != NULL) {
-		PLAN_GOTHERE(de->d_name);
+		PLAN_GOTHERE((int)(de->d_name));
 		/*
 		 * The first 2 dirents are always '.' and '..'
 		 * We skip those.
@@ -545,7 +545,7 @@ read_act_dir(int afd, size_t base, size_t off, int det)
 			continue;
 		}
 
-		PLAN_GOTHERE(de->d_name);
+		PLAN_GOTHERE((int)(de->d_name));
 		int sl = strnlen(de->d_name, 255);
 		a[i] = umem_cache_alloc(act_cache, UMEM_NOFAIL);
 		PLAN_ACT_PTR(a[i]);
@@ -1001,13 +1001,14 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 		perror("set_dur_open_dur_xattr");
 		exit(0);
 	}
+
 	atomic_read(dur_xattr, &prev_dur, sizeof (size_t));
 
 	int time_xattr;
 	struct stat time_st;
 	int nfill = -1;
 	time_xattr = openat(afd, "time",
-			O_XATTR | O_CREAT | O_TRUNC | O_RDWR, ALLRWX);
+			O_XATTR | O_CREAT | O_RDWR, ALLRWX);
 	fstat(time_xattr, &time_st);
 	prev_chunks = time_st.st_size/(sizeof (int));
 
@@ -1084,6 +1085,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 	 * dyn, and bail.
 	 */
 	if (ret->rae_code != RAE_CODE_SUCCESS) {
+		printf("ROLLBACK\n");
 
 		/* rollback duration */
 		dur_xattr =
@@ -1091,7 +1093,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 		atomic_write(dur_xattr, &prev_dur, sizeof (size_t));
 
 		/* rollback time */
-		atomic_write(time_xattr, &time_prev_buf, time_st.st_size);
+		atomic_write(time_xattr, time_prev_buf, time_st.st_size);
 
 		/* rollback dyn */
 		atomic_write(dyn_xattr, &prev_dyn, sizeof (char));
@@ -1527,7 +1529,7 @@ noprint_todos:;
  * TODO: Should roll this into list().
  */
 void
-list_gen_todo(flag)
+list_gen_todo(int flag)
 {
 	char time_fmt[10];
 	int tfd = opentodos(-1);

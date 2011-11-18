@@ -1,4 +1,6 @@
 provider plan {
+	probe atomic_read(int, uint64_t, size_t);
+	probe atomic_write(int, uint64_t, size_t);
 	probe realloc_loop(void *);
 	probe commit_acts_loop(void *);
 	probe commit_act(char *, int, size_t);

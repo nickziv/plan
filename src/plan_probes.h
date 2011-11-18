@@ -22,6 +22,24 @@ extern "C" {
 #define	PLAN_ACT_PTR_ENABLED() \
 	__dtraceenabled_plan___act_ptr(0)
 #endif
+#define	PLAN_ATOMIC_READ(arg0, arg1, arg2) \
+	__dtrace_plan___atomic_read(arg0, arg1, arg2)
+#ifndef	__sparc
+#define	PLAN_ATOMIC_READ_ENABLED() \
+	__dtraceenabled_plan___atomic_read()
+#else
+#define	PLAN_ATOMIC_READ_ENABLED() \
+	__dtraceenabled_plan___atomic_read(0)
+#endif
+#define	PLAN_ATOMIC_WRITE(arg0, arg1, arg2) \
+	__dtrace_plan___atomic_write(arg0, arg1, arg2)
+#ifndef	__sparc
+#define	PLAN_ATOMIC_WRITE_ENABLED() \
+	__dtraceenabled_plan___atomic_write()
+#else
+#define	PLAN_ATOMIC_WRITE_ENABLED() \
+	__dtraceenabled_plan___atomic_write(0)
+#endif
 #define	PLAN_COMMIT_ACT(arg0, arg1, arg2) \
 	__dtrace_plan___commit_act(arg0, arg1, arg2)
 #ifndef	__sparc
@@ -147,6 +165,18 @@ extern int __dtraceenabled_plan___act_ptr(void);
 #else
 extern int __dtraceenabled_plan___act_ptr(long);
 #endif
+extern void __dtrace_plan___atomic_read(int, uint64_t, size_t);
+#ifndef	__sparc
+extern int __dtraceenabled_plan___atomic_read(void);
+#else
+extern int __dtraceenabled_plan___atomic_read(long);
+#endif
+extern void __dtrace_plan___atomic_write(int, uint64_t, size_t);
+#ifndef	__sparc
+extern int __dtraceenabled_plan___atomic_write(void);
+#else
+extern int __dtraceenabled_plan___atomic_write(long);
+#endif
 extern void __dtrace_plan___commit_act(char *, int, size_t);
 #ifndef	__sparc
 extern int __dtraceenabled_plan___commit_act(void);
@@ -230,6 +260,10 @@ extern int __dtraceenabled_plan___vmem_xalloc(long);
 
 #define	PLAN_ACT_PTR(arg0)
 #define	PLAN_ACT_PTR_ENABLED() (0)
+#define	PLAN_ATOMIC_READ(arg0, arg1, arg2)
+#define	PLAN_ATOMIC_READ_ENABLED() (0)
+#define	PLAN_ATOMIC_WRITE(arg0, arg1, arg2)
+#define	PLAN_ATOMIC_WRITE_ENABLED() (0)
 #define	PLAN_COMMIT_ACT(arg0, arg1, arg2)
 #define	PLAN_COMMIT_ACT_ENABLED() (0)
 #define	PLAN_COMMIT_ACTS_LOOP(arg0)

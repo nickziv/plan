@@ -3,7 +3,7 @@ plan:
 	cc -c plan_manip.c
 	cc -c plan_main.c
 	cc -c plan_atomic.c
-	dtrace -G -32 -s plan_probes.d plan_manip.o plan_main.o
+	dtrace -G -32 -s plan_probes.d plan_manip.o plan_main.o plan_atomic.o
 	cc -o plan plan_main.o plan_manip.o plan_atomic.o plan_probes.o -lumem -ldtrace
 
 clean:
