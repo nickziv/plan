@@ -1085,7 +1085,6 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 	 * dyn, and bail.
 	 */
 	if (ret->rae_code != RAE_CODE_SUCCESS) {
-		printf("ROLLBACK\n");
 
 		/* rollback duration */
 		dur_xattr =
