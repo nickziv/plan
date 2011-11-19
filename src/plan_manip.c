@@ -1091,7 +1091,15 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 			openat(afd, "dur", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
 		atomic_write(dur_xattr, &prev_dur, sizeof (size_t));
 
-		/* rollback time */
+		/*
+		 * rollback time 
+		 *
+		 * we close and then open the time_xattr, to reduce its size to
+		 * zero
+		 */
+		close(time_xattr);
+		time_xattr = openat(afd, "time",
+				O_XATTR | O_CREAT | O_RDWR | O_TRUNC, ALLRWX);
 		atomic_write(time_xattr, time_prev_buf, time_st.st_size);
 
 		/* rollback dyn */
