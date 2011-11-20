@@ -966,116 +966,141 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 		return (DUR_ECHUNKS);
 	}
 
-	PLAN_SET_DUR(n, dur);
+	PLAN_SET_DUR(n, dur, chunks);
 
 
-	size_t base;
-	size_t off;
+	/*
+	 * Needed file desctiptors.
+	 */
+	int time_xattr;
+	int dur_xattr;
+	int dyn_xattr;
 	int dfd;
 	if (date) {
 		dfd = opendate(date);
 	} else {
 		dfd = openday(day);
 	}
-
-	get_awake_range(day, date, &base, &off);
-
 	int adfd = openacts(dfd);
-
 	int afd = openat(adfd, n, O_RDWR);
 	if (afd == -1) {
 		return (DUR_EEXIST);
 	}
-
-	size_t prev_dur = 0;
-	size_t prev_chunks = 1;
-
-	/*
-	 * We write the new duration to disk and do a reallocation. If the
-	 * reallocation succeeds, we commit all of the new data. If it fails,
-	 * we don't commit anything, and rollback the duration to the old
-	 * value.
-	 */
-	int dur_xattr = openat(afd, "dur", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
-	if (dur_xattr == -1) {
-		perror("set_dur_open_dur_xattr");
-		exit(0);
-	}
-
-	atomic_read(dur_xattr, &prev_dur, sizeof (size_t));
-
-	int time_xattr;
-	struct stat time_st;
-	int nfill = -1;
+	dur_xattr = openat(afd, "dur", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
 	time_xattr = openat(afd, "time",
 			O_XATTR | O_CREAT | O_RDWR, ALLRWX);
+	dyn_xattr = openat(afd, "dyn", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
+
+	/*
+	 * These variables all hold data that has to be restored in case of
+	 * failure.
+	 */
+	size_t prev_dur = 0;
+	size_t prev_chunks = 1;
+	char prev_dyn = 0;
+	char yes_dyn = 1;
+	struct stat time_st;
+	int prev_time_mono;
+	int *prev_time = &prev_time_mono;
+
+	/*
+	 * Get the previous number of chunks.
+	 */
 	fstat(time_xattr, &time_st);
-	prev_chunks = time_st.st_size/(sizeof (int));
+	prev_chunks = time_st.st_size/sizeof(int);
 
 	/*
-	 * No need to recalculate a solution that we already have.
+	 * Get the previous time
 	 */
-	if (prev_dur == dur && chunks == prev_chunks) {
-		return (SUCCESS);
+	if (prev_chunks > 1) {
+		prev_time = umem_alloc(time_st.st_size, UMEM_NOFAIL);
+		atomic_read(time_xattr, prev_time, time_st.st_size);
+	} else if (prev_chunks > 0) {
+		atomic_read(time_xattr, prev_time, time_st.st_size);
+	} else {
+		*prev_time = 0;
 	}
-
-	lseek(dur_xattr, 0, SEEK_SET);
-
-	PLAN_PRECOMMIT_DUR(n, dur);
-
-	atomic_write(dur_xattr, &dur, sizeof (size_t));
-	close(dur_xattr);
-	int *time_prev_buf;
-
-	/*
-	 * We save the data in "time", so that we can restore it in case
-	 * allocation fails.
-	 */
-	time_prev_buf = umem_alloc(time_st.st_size, UMEM_NOFAIL);
-	atomic_read(time_xattr, time_prev_buf, time_st.st_size);
 	lseek(time_xattr, 0, SEEK_SET);
 
 	/*
-	 * If we are setting a chunked duration to a non-chunked duration, we
-	 * need to make sure that it's size is adjusted to the size of an int.
+	 * Get previous dyn-attr
 	 */
-	if (chunks == 1) {
-		atomic_write(time_xattr, &nfill, sizeof (int));
-		lseek(time_xattr, 0, SEEK_SET);
+	atomic_read(dyn_xattr, &prev_dyn, sizeof (char));
+
+	/*
+	 * Get previous duration
+	 */
+	atomic_read(dur_xattr, &prev_dur, sizeof (size_t));
+
+	/*
+	 * Reset our location within the dur and dyn attrs, to file start.
+	 */
+	lseek(dur_xattr, 0, SEEK_SET);
+	lseek(dyn_xattr, 0, SEEK_SET);
+
+	/*
+	 * If were setting the same duration and chunks as we did previously,
+	 * we just return success, as this old work.
+	 */
+	if (prev_dur == dur && prev_chunks == chunks) {
+		return (SUCCESS);
 	}
 
+	/*
+	 * If we are trying to set a duration with the same number of chunks
+	 * (or greater), we can just use the time_xattr file as it is. But, if
+	 * we're setting less chunks, we need to close the file and open it
+	 * with the O_TRUNC tag, which removes all data from it.
+	 */
+	if (chunks < prev_chunks) {
+		close(time_xattr);
+		time_xattr = openat(afd, "time",
+				O_TRUNC | O_XATTR | O_CREAT | O_RDWR, ALLRWX);
+	}
+
+	
+
 
 	/*
-	 * XXX: We also need to save the prev time and prev dyn, so that we
-	 * could rollback lower down.
+	 * We now write the new values to disk, needed to fulfill the
+	 * reallocation.
 	 */
-	int dyn_xattr;
-	char prev_dyn;
-	char yes_dyn = 1;
-	int time_fill = -1;
-	size_t i = 0;
-	/*
-	 * If we are setting a chunked duration, we modify the time attr, by
-	 * setting it to the size of the chunks * sizeof(int).
-	 */
+	atomic_write(dur_xattr, &dur, sizeof (size_t));
+	atomic_write(dyn_xattr, &yes_dyn, sizeof (char));
+	lseek(dur_xattr, 0, SEEK_SET);
+	lseek(dyn_xattr, 0, SEEK_SET);
+
+	int neg_time = -1;
+	if (chunks == 1) {
+		atomic_write(time_xattr, &neg_time, sizeof (int));
+	}
+
+	int i = 0;
 	if (chunks > 1) {
-		dyn_xattr = openat(afd, "dyn", O_XATTR | O_CREAT | O_RDWR,
-			ALLRWX);
-
-		atomic_read(dyn_xattr, &prev_dyn, sizeof (char));
-		lseek(dyn_xattr, 0, SEEK_SET);
-		atomic_write(dyn_xattr, &yes_dyn, sizeof (char));
-		lseek(dyn_xattr, 0, SEEK_SET);
-
 		while (i < chunks) {
-			atomic_write(time_xattr, &time_fill, sizeof (int));
+			atomic_write(time_xattr, &neg_time, sizeof (int));
 			i++;
 		}
-
-		lseek(time_xattr, 0, SEEK_SET);
 	}
+	lseek(time_xattr, 0, SEEK_SET);
+
+	/*
+	 * We close the time, dur, and dyn files so that realloc acts can take
+	 * things from, and so that we can reopen some of them later with
+	 * O_TRUNC (if we fail).
+	 */
+	close(time_xattr);
+	close(dyn_xattr);
+	close(dur_xattr);
 
 
+	size_t base;
+	size_t off;
+	get_awake_range(day, date, &base, &off);
+
+
+
+	PLAN_PRECOMMIT_DUR(n, dur);
 
 
 	ra_err_t *ret = realloc_acts(day, date, base, off);
@@ -1086,23 +1111,17 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 	 */
 	if (ret->rae_code != RAE_CODE_SUCCESS) {
 
-		/* rollback duration */
 		dur_xattr =
 			openat(afd, "dur", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
-		atomic_write(dur_xattr, &prev_dur, sizeof (size_t));
-
-		/*
-		 * rollback time 
-		 *
-		 * we close and then open the time_xattr, to reduce its size to
-		 * zero
-		 */
-		close(time_xattr);
+		dur_xattr =
+			openat(afd, "dyn", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
 		time_xattr = openat(afd, "time",
 				O_XATTR | O_CREAT | O_RDWR | O_TRUNC, ALLRWX);
-		atomic_write(time_xattr, time_prev_buf, time_st.st_size);
 
-		/* rollback dyn */
+		atomic_write(dur_xattr, &prev_dur, sizeof (size_t));
+
+		atomic_write(time_xattr, prev_time, time_st.st_size);
+
 		atomic_write(dyn_xattr, &prev_dyn, sizeof (char));
 
 		goto skip_commit;

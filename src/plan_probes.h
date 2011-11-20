@@ -130,8 +130,8 @@ extern "C" {
 #define	PLAN_REALLOC_LOOP_ENABLED() \
 	__dtraceenabled_plan___realloc_loop(0)
 #endif
-#define	PLAN_SET_DUR(arg0, arg1) \
-	__dtrace_plan___set_dur(arg0, arg1)
+#define	PLAN_SET_DUR(arg0, arg1, arg2) \
+	__dtrace_plan___set_dur(arg0, arg1, arg2)
 #ifndef	__sparc
 #define	PLAN_SET_DUR_ENABLED() \
 	__dtraceenabled_plan___set_dur()
@@ -237,7 +237,7 @@ extern int __dtraceenabled_plan___realloc_loop(void);
 #else
 extern int __dtraceenabled_plan___realloc_loop(long);
 #endif
-extern void __dtrace_plan___set_dur(char *, size_t);
+extern void __dtrace_plan___set_dur(char *, size_t, size_t);
 #ifndef	__sparc
 extern int __dtraceenabled_plan___set_dur(void);
 #else
@@ -284,7 +284,7 @@ extern int __dtraceenabled_plan___vmem_xalloc(long);
 #define	PLAN_READ_TODO_ENABLED() (0)
 #define	PLAN_REALLOC_LOOP(arg0)
 #define	PLAN_REALLOC_LOOP_ENABLED() (0)
-#define	PLAN_SET_DUR(arg0, arg1)
+#define	PLAN_SET_DUR(arg0, arg1, arg2)
 #define	PLAN_SET_DUR_ENABLED() (0)
 #define	PLAN_VMEM_CREATE(arg0)
 #define	PLAN_VMEM_CREATE_ENABLED() (0)

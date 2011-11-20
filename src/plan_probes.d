@@ -14,5 +14,5 @@ provider plan {
 	probe act_ptr(void *);
 	probe parse_dur(size_t);
 	probe do_dur(void *, size_t);
-	probe set_dur(char*, size_t);
+	probe set_dur(char*, size_t, size_t);
 };
