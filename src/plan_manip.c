@@ -1170,6 +1170,8 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 	size_t base;
 	size_t off;
 	size_t dur;
+	size_t chunks;
+	struct stat time_stat;
 	int old_time = -1;
 	ra_err_t *re;
 
@@ -1192,6 +1194,11 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 	dyn_xattr = openat(afd, "dyn", O_RDWR | O_XATTR | O_CREAT, ALLRWX);
 	PLAN_GOTHERE(dyn);
 
+	fstat(time_xattr, &time_stat);
+	chunks = time_stat.st_size/sizeof (int);
+	if (chunks > 1) {
+		return (TIME_ECHUNK);
+	}
 
 	atomic_read(time_xattr, &old_time, sizeof (int));
 	lseek(time_xattr, 0, SEEK_SET);

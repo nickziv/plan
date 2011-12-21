@@ -59,6 +59,7 @@ typedef enum err {
 	TIME_EEXIST,
 	TIME_ENODUR,
 	TIME_ELENGTH,
+	TIME_ECHUNK,
 	TIME_TD,
 	RA_EFIT,
 	RA_EARRA,

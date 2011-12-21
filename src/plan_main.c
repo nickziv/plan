@@ -287,6 +287,11 @@ handle_err(err_t e, char *n, day_t d, tm_t *date)
 		printf(" Activity won't fit within the day\n");
 		break;
 
+	case TIME_ECHUNK:
+		printf("Can't set time on activity %s.", n);
+		printf(" Activity has more than one chunk.\n");
+		break;
+
 	case DUR_EEXIST:
 		printf("Can't set duration on activity %s.", n);
 		printf(" Activity doesn't exist.\n");
@@ -1107,7 +1112,7 @@ main(int ac, char *av[])
 	 * running the command as root, which creates a '/root/.plandb'
 	 * directory, instead of using the user's directory.
 	 */
-	if (1) {
+	if (0) {
 		sleep(7);
 	}
 
