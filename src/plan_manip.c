@@ -1040,7 +1040,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 
 	/*
 	 * If were setting the same duration and chunks as we did previously,
-	 * we just return success, as this old work.
+	 * we just return success, as this is old work.
 	 */
 	if (prev_dur == dur && prev_chunks == chunks) {
 		return (SUCCESS);
@@ -1062,13 +1062,11 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 
 
 	/*
-	 * We now write the new values to disk, needed to fulfill the
+	 * We now write the new dur value to disk, needed to fulfill the
 	 * reallocation.
 	 */
 	atomic_write(dur_xattr, &dur, sizeof (size_t));
-	atomic_write(dyn_xattr, &yes_dyn, sizeof (char));
 	lseek(dur_xattr, 0, SEEK_SET);
-	lseek(dyn_xattr, 0, SEEK_SET);
 
 	int neg_time = -1;
 	if (chunks == 1) {
@@ -1077,6 +1075,13 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 
 	int i = 0;
 	if (chunks > 1) {
+		/*
+		 * If we have more than one chunk the activity _must_ be
+		 * dynamic. If we have just one chunk, then it can be whatever
+		 * it was previously.
+		 */
+		atomic_write(dyn_xattr, &yes_dyn, sizeof (char));
+		lseek(dyn_xattr, 0, SEEK_SET);
 		while (i < chunks) {
 			atomic_write(time_xattr, &neg_time, sizeof (int));
 			i++;
@@ -1113,7 +1118,7 @@ set_dur(char *n, int day, tm_t *date, size_t dur, size_t chunks)
 
 		dur_xattr =
 			openat(afd, "dur", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
-		dur_xattr =
+		dyn_xattr =
 			openat(afd, "dyn", O_XATTR | O_CREAT | O_RDWR, ALLRWX);
 		time_xattr = openat(afd, "time",
 				O_XATTR | O_CREAT | O_RDWR | O_TRUNC, ALLRWX);

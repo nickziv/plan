@@ -992,9 +992,8 @@ do_list(int ac, char *av[])
 
 	day = parse_day(ls_target);
 	parse_date(ls_target, &date);
-	int np;
 	if (day != -1 || date) {
-		list(day, date, flag, &np);
+		list(day, date, flag, 0);
 		return (SUCCESS);
 	}
 
@@ -1108,7 +1107,7 @@ main(int ac, char *av[])
 	 * running the command as root, which creates a '/root/.plandb'
 	 * directory, instead of using the user's directory.
 	 */
-	if (0) {
+	if (1) {
 		sleep(7);
 	}
 
