@@ -1354,6 +1354,7 @@ list(day_t d, tm_t *date, int flag, int nl)
 	int dfd;
 	int have_date;
 
+
 	if (!date && d <= -1) {
 		exit(0);
 	}

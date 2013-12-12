@@ -40,6 +40,7 @@
 #define	NEXT	2
 
 typedef enum day {
+	NEGDAY = -1,	/* force day_t to be signed, GCC/SunCC diff */
 	SUN,
 	MON,
 	TUES,
