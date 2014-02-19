@@ -84,8 +84,8 @@ extern void list_gen_todo(int);
 /*
  * Forward declaration.
  */
-void usage(int ix, int usage_bool);
-void print_usage_all(void);
+static void usage(int ix, int usage_bool);
+static void print_usage_all(void);
 
 typedef enum plan_help {
 	HELP_CREATE,
