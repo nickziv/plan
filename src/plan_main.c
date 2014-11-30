@@ -1168,7 +1168,7 @@ main(int ac, char *av[])
 	struct passwd *pwd = getpwuid(uid);
 	char *home = pwd->pw_dir;
 	size_t hl = strlen(home);
-	size_t pdbl = hl+8;
+	size_t pdbl = hl+9;
 	/* the db root */
 	char *pdb_path = umem_alloc(pdbl, UMEM_NOFAIL);
 	strcpy(pdb_path, home);
