@@ -156,7 +156,6 @@ parse_time(char *t, int *time)
 		printf("Hours are a 2-digit value\n.");
 		printf("The first digit can't be greater than '2'\n");
 		exit(0);
-		return (-1);
 	}
 
 	int hrs = 0;
@@ -171,8 +170,12 @@ parse_time(char *t, int *time)
 	}
 	PLAN_GOT_HERE((int)0);
 
-	/* to skip the ':' */
-	c += 2;
+	c++;
+	if (*c != ':') {
+		printf("Error, missing colon ':'. Format is hh:mm\n");
+		exit(0);
+	}
+	c++;
 	int mins = 0;
 
 	mins = (*c - 48) * 10;

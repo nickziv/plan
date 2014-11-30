@@ -1481,6 +1481,7 @@ skip_exit:;
 
 			thrs = (a[acnt]->act_time)/60;
 			tmins = (a[acnt]->act_time) - (thrs*60);
+PLAN_GOT_HERE(a[acnt]->act_time);
 			sprintf((char *)&time_fmt, "%.2d:%.2d", thrs, tmins);
 
 not_assigned_time:;
