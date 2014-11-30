@@ -10,7 +10,7 @@ provider plan {
 	probe read_todo(char *, int);
 	probe vmem_xalloc(void *, size_t, void *, void *);
 	probe vmem_create(void *);
-	probe gothere(int);
+	probe got_here(int);
 	probe act_ptr(void *);
 	probe parse_dur(size_t);
 	probe do_dur(void *, size_t);

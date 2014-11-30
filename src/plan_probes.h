@@ -67,14 +67,14 @@ extern "C" {
 #define	PLAN_DO_DUR_ENABLED() \
 	__dtraceenabled_plan___do_dur(0)
 #endif
-#define	PLAN_GOTHERE(arg0) \
-	__dtrace_plan___gothere(arg0)
+#define	PLAN_GOT_HERE(arg0) \
+	__dtrace_plan___got_here(arg0)
 #ifndef	__sparc
-#define	PLAN_GOTHERE_ENABLED() \
-	__dtraceenabled_plan___gothere()
+#define	PLAN_GOT_HERE_ENABLED() \
+	__dtraceenabled_plan___got_here()
 #else
-#define	PLAN_GOTHERE_ENABLED() \
-	__dtraceenabled_plan___gothere(0)
+#define	PLAN_GOT_HERE_ENABLED() \
+	__dtraceenabled_plan___got_here(0)
 #endif
 #define	PLAN_NTIMES(arg0) \
 	__dtrace_plan___ntimes(arg0)
@@ -195,11 +195,11 @@ extern int __dtraceenabled_plan___do_dur(void);
 #else
 extern int __dtraceenabled_plan___do_dur(long);
 #endif
-extern void __dtrace_plan___gothere(int);
+extern void __dtrace_plan___got_here(int);
 #ifndef	__sparc
-extern int __dtraceenabled_plan___gothere(void);
+extern int __dtraceenabled_plan___got_here(void);
 #else
-extern int __dtraceenabled_plan___gothere(long);
+extern int __dtraceenabled_plan___got_here(long);
 #endif
 extern void __dtrace_plan___ntimes(int);
 #ifndef	__sparc
@@ -270,8 +270,8 @@ extern int __dtraceenabled_plan___vmem_xalloc(long);
 #define	PLAN_COMMIT_ACTS_LOOP_ENABLED() (0)
 #define	PLAN_DO_DUR(arg0, arg1)
 #define	PLAN_DO_DUR_ENABLED() (0)
-#define	PLAN_GOTHERE(arg0)
-#define	PLAN_GOTHERE_ENABLED() (0)
+#define	PLAN_GOT_HERE(arg0)
+#define	PLAN_GOT_HERE_ENABLED() (0)
 #define	PLAN_NTIMES(arg0)
 #define	PLAN_NTIMES_ENABLED() (0)
 #define	PLAN_PARSE_DUR(arg0)

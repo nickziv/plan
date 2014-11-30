@@ -441,45 +441,45 @@ read_todo_dir(int tfd, int det)
 			continue;
 		}
 		if ((i*psz) == tsz) {
-			PLAN_GOTHERE(0);
+			PLAN_GOT_HERE(0);
 			if (i == 0) {
-			PLAN_GOTHERE(1);
+			PLAN_GOT_HERE(1);
 				tsz = 100*psz;
 				tsz2 = tsz;
 			} else {
-			PLAN_GOTHERE(2);
+			PLAN_GOT_HERE(2);
 				tsz2 = tsz * 2;
 			}
 			todo_t **t2 = umem_alloc(tsz2, UMEM_NOFAIL);
-			PLAN_GOTHERE(3);
+			PLAN_GOT_HERE(3);
 			if (i) {
 				bcopy(t, t2, tsz);
 			}
-			PLAN_GOTHERE(4);
+			PLAN_GOT_HERE(4);
 			umem_free(t, tsz);
-			PLAN_GOTHERE(5);
+			PLAN_GOT_HERE(5);
 			t = t2;
-			PLAN_GOTHERE(6);
+			PLAN_GOT_HERE(6);
 			tsz = tsz2;
-			PLAN_GOTHERE(7);
+			PLAN_GOT_HERE(7);
 		}
 		int sl = strnlen(de->d_name, 255);
-			PLAN_GOTHERE(8);
+			PLAN_GOT_HERE(8);
 		t[i] = umem_cache_alloc(todo_cache, UMEM_NOFAIL);
-			PLAN_GOTHERE(9);
+			PLAN_GOT_HERE(9);
 		char *name_str = umem_zalloc((sl+1), UMEM_NOFAIL);
-			PLAN_GOTHERE(10);
+			PLAN_GOT_HERE(10);
 		bcopy(de->d_name, name_str, (sl+1));
-			PLAN_GOTHERE(11);
+			PLAN_GOT_HERE(11);
 		t[i]->td_name_len = sl;
-			PLAN_GOTHERE(12);
+			PLAN_GOT_HERE(12);
 		t[i]->td_name = name_str;
-			PLAN_GOTHERE(13);
+			PLAN_GOT_HERE(13);
 		int todo_fd = openat(tfd, de->d_name, O_RDWR);
-			PLAN_GOTHERE(14);
+			PLAN_GOT_HERE(14);
 		int time_xattr = openat(todo_fd, "time",
 			O_XATTR | O_RDWR | O_CREAT, ALLRWX);
-			PLAN_GOTHERE(15);
+			PLAN_GOT_HERE(15);
 
 		PLAN_READ_TODO(t[i]->td_name, t[i]->td_time);
 
@@ -498,10 +498,10 @@ read_todo_dir(int tfd, int det)
 		}
 
 		PLAN_READ_TODO(t[i]->td_name, t[i]->td_time);
-			PLAN_GOTHERE(16);
+			PLAN_GOT_HERE(16);
 
 		close(time_xattr);
-			PLAN_GOTHERE(17);
+			PLAN_GOT_HERE(17);
 
 		close(todo_fd);
 		i++;
@@ -535,7 +535,7 @@ read_act_dir(int afd, size_t base, size_t off, int det)
 	DIR *acts_dir = fdopendir(afd);
 	int dotdirs = 1;
 	while ((de = readdir(acts_dir)) != NULL) {
-		PLAN_GOTHERE((int)(de->d_name));
+		PLAN_GOT_HERE((int)(de->d_name));
 		/*
 		 * The first 2 dirents are always '.' and '..'
 		 * We skip those.
@@ -545,7 +545,7 @@ read_act_dir(int afd, size_t base, size_t off, int det)
 			continue;
 		}
 
-		PLAN_GOTHERE((int)(de->d_name));
+		PLAN_GOT_HERE((int)(de->d_name));
 		int sl = strnlen(de->d_name, 255);
 		a[i] = umem_cache_alloc(act_cache, UMEM_NOFAIL);
 		PLAN_ACT_PTR(a[i]);
@@ -674,7 +674,7 @@ vm_set:;
 		}
 		close(dyn_xattr);
 
-		PLAN_GOTHERE(a[i]->act_dur);
+		PLAN_GOT_HERE(a[i]->act_dur);
 		i++;
 	}
 	closedir(acts_dir);
@@ -771,29 +771,29 @@ alloc_again:;
 			realloc_err.rae_code = RAE_CODE_ARRANGE;
 			realloc_err.rae_act = a[j];
 		}
-		PLAN_GOTHERE(0);
+		PLAN_GOT_HERE(0);
 		a[j]->act_loc = r;
-		PLAN_GOTHERE(1);
+		PLAN_GOT_HERE(1);
 
 		/*
 		 * And now, we have modify the time and dur members.
 		 */
 		a[j]->act_time = MEM2TIME(r);
-		PLAN_GOTHERE(2);
+		PLAN_GOT_HERE(2);
 		j++;
-		PLAN_GOTHERE(3);
+		PLAN_GOT_HERE(3);
 	}
 	if (k) {
 		j = 0;
 		k--;
-		PLAN_GOTHERE(4);
+		PLAN_GOT_HERE(4);
 		goto alloc_again;
 	}
-	PLAN_GOTHERE(5);
+	PLAN_GOT_HERE(5);
 	close(dfd);
-	PLAN_GOTHERE(6);
+	PLAN_GOT_HERE(6);
 	close(afd);
-	PLAN_GOTHERE(7);
+	PLAN_GOT_HERE(7);
 	return (&realloc_err);
 }
 
@@ -1160,7 +1160,7 @@ skip_commit:;
 int
 set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 {
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 	int dfd;
 	int adfd;
 	int afd;
@@ -1181,7 +1181,7 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 		dfd = openday(day);
 	}
 
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 	get_awake_range(day, date, &base, &off);
 
 	adfd = openacts(dfd);
@@ -1192,7 +1192,7 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 	time_xattr = openat(afd, "time", O_RDWR | O_XATTR | O_CREAT, ALLRWX);
 	dur_xattr = openat(afd, "dur", O_RDWR | O_XATTR | O_CREAT, ALLRWX);
 	dyn_xattr = openat(afd, "dyn", O_RDWR | O_XATTR | O_CREAT, ALLRWX);
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 
 	fstat(time_xattr, &time_stat);
 	chunks = time_stat.st_size/sizeof (int);
@@ -1206,28 +1206,28 @@ set_time_act(char *n, int day, tm_t *date, int time, char dyn)
 	atomic_read(dur_xattr, &dur, sizeof (size_t));
 	lseek(dur_xattr, 0, SEEK_SET);
 
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 
 	if (dur == 0) {
 		return (TIME_ENODUR);
 	}
 
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 
 	if ((time + (int)dur) > 1440) {
 		return (TIME_ELENGTH);
 	}
 
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 
 	atomic_write(dyn_xattr, &dyn, sizeof (char));
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 
 	if (!dyn) {
 		atomic_write(time_xattr, &time, sizeof (int));
 		lseek(time_xattr, 0, SEEK_SET);
 	}
-	PLAN_GOTHERE(dyn);
+	PLAN_GOT_HERE(dyn);
 
 	close(time_xattr);
 	close(dyn_xattr);

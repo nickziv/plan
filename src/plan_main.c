@@ -151,7 +151,7 @@ parse_time(char *t, int *time)
 {
 	/* time is 24hr format hh:mm */
 	char *c = t;
-	PLAN_GOTHERE((int)c);
+	PLAN_GOT_HERE((int)c);
 	if (*c > '2') {
 		printf("Hours are a 2-digit value\n.");
 		printf("The first digit can't be greater than '2'\n");
@@ -163,33 +163,33 @@ parse_time(char *t, int *time)
 	hrs = (*c - 48) * 10;
 	c++;
 	hrs += (*c - 48);
-	PLAN_GOTHERE((int)hrs);
+	PLAN_GOT_HERE((int)hrs);
 	if (hrs > 23) {
 		printf("The max hour value is 23. You speicified %d\n",
 			hrs);
 		exit(0);
 	}
-	PLAN_GOTHERE((int)0);
+	PLAN_GOT_HERE((int)0);
 
 	/* to skip the ':' */
 	c += 2;
 	int mins = 0;
 
 	mins = (*c - 48) * 10;
-	PLAN_GOTHERE((int)mins);
+	PLAN_GOT_HERE((int)mins);
 	c++;
 
 	mins += (*c - 48);
-	PLAN_GOTHERE((int)mins);
+	PLAN_GOT_HERE((int)mins);
 
 	if (mins > 59) {
 		printf("The max minute value is 59. You speicified %d\n",
 			hrs);
 		exit(0);
 	}
-	PLAN_GOTHERE((int)mins);
+	PLAN_GOT_HERE((int)mins);
 	mins += (hrs * 60);
-	PLAN_GOTHERE((int)mins);
+	PLAN_GOT_HERE((int)mins);
 	*time = mins;
 	return (0);
 }
@@ -632,18 +632,18 @@ parse_dur(char *d, size_t *dur, size_t *chunks)
 		return (-1);
 	}
 
-	PLAN_GOTHERE((int)c);
+	PLAN_GOT_HERE((int)c);
 
 	hrs = *c - 48;
 	hrs *= 10;
 	c++;
-	PLAN_GOTHERE((int)c);
+	PLAN_GOT_HERE((int)c);
 	hrs += *c - 48;
 	c += 2; /* skip the 'h' */
 	mins = *c - 48;
 	mins *= 10;
 	c++;
-	PLAN_GOTHERE((int)c);
+	PLAN_GOT_HERE((int)c);
 	mins += *c - 48;
 
 	if (mins > 59 || hrs > 24) {
@@ -665,9 +665,9 @@ parse_dur(char *d, size_t *dur, size_t *chunks)
 	}
 
 	c++;	/* Now we're at 'm' */
-	PLAN_GOTHERE((int)c);
+	PLAN_GOT_HERE((int)c);
 	c++;	/* and /now/ we're at '*' */
-	PLAN_GOTHERE((int)c);
+	PLAN_GOT_HERE((int)c);
 
 	if (*c != '*') {
 		printf("Expected '*', found '%c' instead, in \"%s\"\n",
@@ -676,7 +676,7 @@ parse_dur(char *d, size_t *dur, size_t *chunks)
 	}
 
 	c++;
-	PLAN_GOTHERE((int)c);
+	PLAN_GOT_HERE((int)c);
 	char *invch;
 	*chunks = (size_t)strtol(c, &invch, 0);
 
@@ -785,7 +785,7 @@ do_time(int ac, char *av[])
 
 	if (*(av[1]+5) >= 48 && *(av[1]+5) <= 57) {
 		int r = parse_time((av[1]+5), &time);
-		PLAN_GOTHERE((int)time);
+		PLAN_GOT_HERE((int)time);
 		if (r == -1) {
 			usage(cur_cmd, 1);
 		}
