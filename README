@@ -1,1 +1,16 @@
 plan is a light weight time management system for the command line.
+
+UPDATE: This project is currently on life-support. Due to a multitude of
+youthful mistakes, coupled with extreme impatience the project's code is a
+total mess. It is unstable to use, and needs to be refactored. Even though I
+use it personally, I discourage everyone else from using it, until I've fixed
+some issues. Currently, the code needs to be changed, to be less stupid. For
+example:
+
+	1) Should stop using the file system as a data base.  It's slow, buggy,
+	and not portable (only works on Illumos/Solaris).
+
+	2) The entire code base looks like spaghetti. It should look more like
+	lasagna.
+
+	3) There is much more, but it's not worth mentioning here.
